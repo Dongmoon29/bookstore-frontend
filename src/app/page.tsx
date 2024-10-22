@@ -10,7 +10,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Search } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Search, PlusCircle } from 'lucide-react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { ThreeDot } from 'react-loading-indicators';
@@ -40,6 +48,12 @@ export default function BookStoreAdmin() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalBooks, setTotalBooks] = useState(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newBook, setNewBook] = useState({
+    title: '',
+    author: '',
+    sales_count: 0,
+  });
 
   const fetchBooks = async (page = 1, title?: string, author?: string) => {
     setIsLoading(true);
@@ -83,6 +97,18 @@ export default function BookStoreAdmin() {
     fetchBooks(page, titleInput, authorInput);
   };
 
+  const handleAddBook = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${API_URL}/books`, newBook);
+      setIsModalOpen(false);
+      setNewBook({ title: '', author: '', sales_count: 0 });
+      fetchBooks(currentPage, titleInput, authorInput);
+    } catch {
+      alert('Error adding book');
+    }
+  };
+
   useEffect(() => {
     fetchBooks(currentPage, titleInput, authorInput);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -105,7 +131,9 @@ export default function BookStoreAdmin() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">책방</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">책방</h1>
+      </div>
 
       <div className="flex gap-4 mb-4">
         <Input
@@ -125,9 +153,60 @@ export default function BookStoreAdmin() {
         <Button onClick={handleSearch}>
           <Search className="mr-2 h-4 w-4" /> 검색
         </Button>
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" /> 책 추가
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>새 책 추가</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleAddBook} className="space-y-4">
+              <div>
+                <Label htmlFor="title">제목</Label>
+                <Input
+                  id="title"
+                  value={newBook.title}
+                  onChange={(e) =>
+                    setNewBook({ ...newBook, title: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="author">저자</Label>
+                <Input
+                  id="author"
+                  value={newBook.author}
+                  onChange={(e) =>
+                    setNewBook({ ...newBook, author: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="sales_count">판매량</Label>
+                <Input
+                  id="sales_count"
+                  type="number"
+                  value={newBook.sales_count}
+                  onChange={(e) =>
+                    setNewBook({
+                      ...newBook,
+                      sales_count: parseInt(e.target.value),
+                    })
+                  }
+                  required
+                />
+              </div>
+              <Button type="submit">추가</Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {/* TODO: fix isLoading state */}
       {isLoading ? (
         <div className="flex justify-center align-middle">
           <ThreeDot color="black" size="small" text="" textColor="" />
