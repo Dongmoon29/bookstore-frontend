@@ -49,9 +49,16 @@ export default function BookStoreAdmin() {
       if (title?.trim()) params.title = title;
       if (author?.trim()) params.author = author;
 
-      const { data } = await axios.get('http://localhost:8080/api/books', {
-        params,
-      });
+      // const { data } = await axios.get('http://localhost:8080/api/books', {
+      //   params,
+      // });
+
+      const { data } = await axios.get(
+        'http://ec2-15-164-228-211.ap-northeast-2.compute.amazonaws.com:8080/api/books',
+        {
+          params,
+        }
+      );
 
       setBooks(data.books);
       setTotalBooks(data.total);

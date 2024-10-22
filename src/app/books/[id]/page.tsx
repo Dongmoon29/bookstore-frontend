@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/card';
 import axios from 'axios';
 import { useParams } from 'next/navigation';
-
 interface Book {
   id: number;
   title: string;
@@ -31,8 +30,12 @@ export default function BookDetail() {
   useEffect(() => {
     const fetchBook = async () => {
       try {
+        // const { data } = await axios.get(
+        //   `http://localhost:8080/api/books/${id}`
+        // );
+
         const { data } = await axios.get(
-          `http://localhost:8080/api/books/${id}`
+          `http://ec2-15-164-228-211.ap-northeast-2.compute.amazonaws.com:8080/api/books/${id}`
         );
         setBook(data);
       } catch {
