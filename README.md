@@ -18,3 +18,7 @@ npm run build
 # 프로젝트 실행
 npm run start
 ```
+
+## 데모 동영상
+https://github.com/user-attachments/assets/b70aa66b-a306-4068-a098-8c6948a9ec42
+
