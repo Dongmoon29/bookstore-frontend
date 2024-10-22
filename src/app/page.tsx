@@ -1,101 +1,174 @@
-import Image from "next/image";
+'use client';
+import React, { useEffect, useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Search } from 'lucide-react';
+import axios from 'axios';
+import { useRouter } from 'next/navigation';
+import { ThreeDot } from 'react-loading-indicators';
 
-export default function Home() {
+interface Book {
+  id: number;
+  title: string;
+  author: string;
+  sales_count: number;
+}
+
+type Params = {
+  offset: number;
+  limit: number;
+  author?: string;
+  title?: string;
+};
+
+const ITEMS_PER_PAGE = 10;
+
+export default function BookStoreAdmin() {
+  const router = useRouter();
+  const [books, setBooks] = useState<Book[]>([]);
+  const [titleInput, setTitleInput] = useState('');
+  const [authorInput, setAuthorInput] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalBooks, setTotalBooks] = useState(0);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const fetchBooks = async (page = 1, title?: string, author?: string) => {
+    setIsLoading(true);
+    try {
+      const offset = (page - 1) * ITEMS_PER_PAGE;
+      const params: Params = { offset, limit: ITEMS_PER_PAGE };
+
+      if (title?.trim()) params.title = title;
+      if (author?.trim()) params.author = author;
+
+      const { data } = await axios.get('http://localhost:8080/api/books', {
+        params,
+      });
+
+      setBooks(data.books);
+      setTotalBooks(data.total);
+      setCurrentPage(page);
+    } catch {
+      alert('server side error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // handlers
+  const handleRowClick = (id: number) => {
+    router.push(`/books/${id}`);
+  };
+
+  const handleSearch = () => {
+    fetchBooks(1, titleInput, authorInput);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const goToPage = (page: number) => {
+    fetchBooks(page, titleInput, authorInput);
+  };
+
+  useEffect(() => {
+    fetchBooks(currentPage, titleInput, authorInput);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
+
+  const renderPaginationButtons = () => {
+    const totalPages = Math.ceil(totalBooks / ITEMS_PER_PAGE);
+    return Array.from({ length: totalPages }, (_, i) => (
+      <Button
+        key={i + 1}
+        onClick={() => goToPage(i + 1)}
+        variant={currentPage === i + 1 ? 'default' : 'outline'}
+        size="sm"
+        className="mx-1 w-10"
+      >
+        {i + 1}
+      </Button>
+    ));
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">책방</h1>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <div className="flex gap-4 mb-4">
+        <Input
+          placeholder="Filter by title"
+          value={titleInput}
+          onChange={(e) => setTitleInput(e.target.value)}
+          className="max-w-sm"
+          onKeyDown={handleKeyDown}
+        />
+        <Input
+          placeholder="Filter by author"
+          value={authorInput}
+          onChange={(e) => setAuthorInput(e.target.value)}
+          className="max-w-sm"
+          onKeyDown={handleKeyDown}
+        />
+        <Button onClick={handleSearch}>
+          <Search className="mr-2 h-4 w-4" /> Search
+        </Button>
+      </div>
+
+      {/* TODO: fix isLoading state */}
+      {isLoading ? (
+        <div className="flex justify-center align-middle">
+          <ThreeDot color="black" size="small" text="" textColor="" />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>제목</TableHead>
+              <TableHead>저자</TableHead>
+              <TableHead>판매량</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {books.length > 0 ? (
+              books.map((book) => (
+                <TableRow
+                  key={book.id}
+                  onClick={() => handleRowClick(book.id)}
+                  className="cursor-pointer hover:bg-gray-100"
+                >
+                  <TableCell>{book.title}</TableCell>
+                  <TableCell>{book.author}</TableCell>
+                  <TableCell>{book.sales_count}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center">
+                  해당 아이템을 찾을 수 없습니다
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      )}
+
+      {books.length > 0 && (
+        <div className="flex items-center justify-center mt-4">
+          {renderPaginationButtons()}
+        </div>
+      )}
     </div>
   );
 }
