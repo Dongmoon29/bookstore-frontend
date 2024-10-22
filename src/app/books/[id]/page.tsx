@@ -14,7 +14,17 @@ import {
 } from '@/components/ui/card';
 import axios from 'axios';
 import { useParams, useRouter } from 'next/navigation';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { API_URL } from '@/app/utils/const';
+
 interface Book {
   id: number;
   title: string;
@@ -28,6 +38,8 @@ export default function BookDetail() {
   const router = useRouter();
   const [book, setBook] = useState<Book | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false); // 모달 상태 추가
+  const [updatedBook, setUpdatedBook] = useState<Book | null>(null); // 수정할 책 정보
 
   const handleDeleteBook = async (id: number) => {
     try {
@@ -38,11 +50,23 @@ export default function BookDetail() {
     }
   };
 
+  const handleUpdateBook = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await axios.put(`${API_URL}/books/${id}`, updatedBook);
+      setBook(response.data);
+      setIsModalOpen(false);
+    } catch {
+      alert('TODO: handling error');
+    }
+  };
+
   useEffect(() => {
     const fetchBook = async () => {
       try {
         const { data } = await axios.get(`${API_URL}/books/${id}`);
         setBook(data);
+        setUpdatedBook(data);
       } catch {
         alert('TODO: handling error');
       } finally {
@@ -118,9 +142,65 @@ export default function BookDetail() {
             >
               <Edit className="mr-2 h-4 w-4" /> 삭제하기
             </Button>
-            <Button>
-              <Edit className="mr-2 h-4 w-4" /> 수정하기
-            </Button>
+
+            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Edit className="mr-2 h-4 w-4" /> 수정하기
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>책 정보 수정</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleUpdateBook} className="space-y-4">
+                  <div>
+                    <Label htmlFor="title">제목</Label>
+                    <Input
+                      id="title"
+                      value={updatedBook?.title || ''}
+                      onChange={(e) =>
+                        setUpdatedBook({
+                          ...updatedBook,
+                          title: e.target.value,
+                        } as Book)
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="author">저자</Label>
+                    <Input
+                      id="author"
+                      value={updatedBook?.author || ''}
+                      onChange={(e) =>
+                        setUpdatedBook({
+                          ...updatedBook,
+                          author: e.target.value,
+                        } as Book)
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="sales_count">판매량</Label>
+                    <Input
+                      id="sales_count"
+                      type="number"
+                      value={updatedBook?.sales_count || 0}
+                      onChange={(e) =>
+                        setUpdatedBook({
+                          ...updatedBook,
+                          sales_count: parseInt(e.target.value),
+                        } as Book)
+                      }
+                      required
+                    />
+                  </div>
+                  <Button type="submit">수정</Button>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardFooter>
       </Card>
