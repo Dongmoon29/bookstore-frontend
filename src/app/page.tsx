@@ -108,21 +108,21 @@ export default function BookStoreAdmin() {
 
       <div className="flex gap-4 mb-4">
         <Input
-          placeholder="Filter by title"
+          placeholder="제목"
           value={titleInput}
           onChange={(e) => setTitleInput(e.target.value)}
           className="max-w-sm"
           onKeyDown={handleKeyDown}
         />
         <Input
-          placeholder="Filter by author"
+          placeholder="저자"
           value={authorInput}
           onChange={(e) => setAuthorInput(e.target.value)}
           className="max-w-sm"
           onKeyDown={handleKeyDown}
         />
         <Button onClick={handleSearch}>
-          <Search className="mr-2 h-4 w-4" /> Search
+          <Search className="mr-2 h-4 w-4" /> 검색
         </Button>
       </div>
 
