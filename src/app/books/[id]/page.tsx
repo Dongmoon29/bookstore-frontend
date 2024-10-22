@@ -13,7 +13,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import axios from 'axios';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { API_URL } from '@/app/utils/const';
 interface Book {
   id: number;
   title: string;
@@ -24,18 +25,26 @@ interface Book {
 
 export default function BookDetail() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const [book, setBook] = useState<Book | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const handleDeleteBook = async (id: number) => {
+    try {
+      await axios.delete(`${API_URL}/books/${id}`);
+      router.push('/');
+    } catch {
+      alert('TODO: handling error');
+    }
+  };
 
   useEffect(() => {
     const fetchBook = async () => {
       try {
-        const { data } = await axios.get(
-          `http://ec2-15-164-228-211.ap-northeast-2.compute.amazonaws.com:8080/api/books/${id}`
-        );
+        const { data } = await axios.get(`${API_URL}/books/${id}`);
         setBook(data);
       } catch {
-        alert('오류, 잠시 후 다시 시도해주세요');
+        alert('TODO: handling error');
       } finally {
         setIsLoading(false);
       }
@@ -96,13 +105,23 @@ export default function BookDetail() {
         </CardContent>
         <CardFooter className="flex justify-between">
           <Button variant="outline" asChild>
-            <Link href="/books">
+            <Link href="/">
               <ArrowLeft className="mr-2 h-4 w-4" /> 목록으로
             </Link>
           </Button>
-          <Button>
-            <Edit className="mr-2 h-4 w-4" /> 수정하기
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              className="bg-red-600"
+              onClick={() => {
+                handleDeleteBook(book.id);
+              }}
+            >
+              <Edit className="mr-2 h-4 w-4" /> 삭제하기
+            </Button>
+            <Button>
+              <Edit className="mr-2 h-4 w-4" /> 수정하기
+            </Button>
+          </div>
         </CardFooter>
       </Card>
     </div>

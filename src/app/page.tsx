@@ -14,6 +14,7 @@ import { Search } from 'lucide-react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { ThreeDot } from 'react-loading-indicators';
+import { API_URL } from './utils/const';
 
 interface Book {
   id: number;
@@ -49,18 +50,15 @@ export default function BookStoreAdmin() {
       if (title?.trim()) params.title = title;
       if (author?.trim()) params.author = author;
 
-      const { data } = await axios.get(
-        'http://ec2-15-164-228-211.ap-northeast-2.compute.amazonaws.com:8080/api/books',
-        {
-          params,
-        }
-      );
+      const { data } = await axios.get(`${API_URL}/books`, {
+        params,
+      });
 
       setBooks(data.books);
       setTotalBooks(data.total);
       setCurrentPage(page);
     } catch {
-      alert('server side error');
+      alert('TODO: handling error');
     } finally {
       setIsLoading(false);
     }
